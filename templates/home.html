@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — Ekology{% endblock %}
+{% block nav_home %}active{% endblock %}
+{% block extra_css %}
+<style>
+  .dashboard { padding: 40px 60px; }
+  .welcome-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; }
+  .welcome-title { font-family: 'Playfair Display', serif; font-size: 30px; font-weight: 700; color: #1a2e1a; }
+  .welcome-sub { font-size: 14px; color: #7a9b75; margin-top: 4px; }
+  .btn-add {
+    display: flex; align-items: center; gap: 8px;
+    padding: 12px 24px; background: #2d5a27; color: white;
+    border-radius: 10px; text-decoration: none;
+    font-size: 14px; font-weight: 500; transition: all 0.2s;
+  }
+  .btn-add:hover { background: #1a2e1a; transform: translateY(-1px); }
+  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 32px; }
+  .stat-card {
+    background: white; border-radius: 14px;
+    padding: 24px; border: 1px solid #e8f0e5; transition: all 0.2s;
+  }
+  .stat-card:hover { box-shadow: 0 6px 20px rgba(44,90,39,0.08); }
+  .stat-icon { width: 44px; height: 44px; border-radius: 12px; background: #e8f5e3; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 16px; }
+  .stat-value { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 700; color: #1a2e1a; display: block; margin-bottom: 4px; }
+  .stat-label { font-size: 13px; color: #7a9b75; }
+  .section-title { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: #1a2e1a; margin-bottom: 16px; }
+  .xabarlar-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+  .xabar-card { background: white; border-radius: 14px; border: 1px solid #e8f0e5; overflow: hidden; transition: all 0.2s; }
+  .xabar-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(44,90,39,0.1); }
+  .xabar-rasm { width: 100%; height: 160px; object-fit: cover; background: #e8f5e3; display: flex; align-items: center; justify-content: center; font-size: 40px; }
+  .xabar-rasm img { width: 100%; height: 160px; object-fit: cover; }
+  .xabar-body { padding: 16px; }
+  .xabar-turi { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; margin-bottom: 8px; }
+  .turi-plastik { background: #fef3c7; color: #92400e; }
+  .turi-qurilish { background: #fee2e2; color: #991b1b; }
+  .turi-maishiy { background: #e8f5e3; color: #166534; }
+  .turi-kimyoviy { background: #ede9fe; color: #5b21b6; }
+  .turi-noaniq { background: #f3f4f6; color: #374151; }
+  .xabar-tavsif { font-size: 13px; color: #4a6741; line-height: 1.5; margin-bottom: 10px; }
+  .xabar-meta { display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: #7a9b75; }
+  .xabar-holat { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 11px; }
+  .holat-kutilmoqda { background: #fef3c7; color: #92400e; }
+  .holat-qabul { background: #dbeafe; color: #1e40af; }
+  .holat-tasdiqlandi { background: #dcfce7; color: #166534; }
+  .holat-tozalandi { background: #dcfce7; color: #166534; }
+  .holat-rad { background: #fee2e2; color: #991b1b; }
+  .empty-state { text-align: center; padding: 60px 40px; background: white; border-radius: 16px; border: 1px solid #e8f0e5; }
+  .empty-icon { font-size: 48px; margin-bottom: 16px; }
+  .empty-title { font-size: 18px; font-weight: 500; color: #1a2e1a; margin-bottom: 8px; }
+  .empty-sub { font-size: 14px; color: #7a9b75; margin-bottom: 20px; }
+
+  /* REYTING */
+  .reyting-section { margin-top: 40px; }
+  .reyting-list { background: white; border-radius: 14px; border: 1px solid #e8f0e5; overflow: hidden; }
+  .reyting-item { display: flex; align-items: center; gap: 16px; padding: 14px 20px; border-bottom: 1px solid #e8f0e5; }
+  .reyting-item:last-child { border-bottom: none; }
+  .reyting-num { width: 28px; height: 28px; border-radius: 50%; background: #e8f5e3; color: #2d5a27; font-family: 'Playfair Display', serif; font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .reyting-num.top1 { background: #fef3c7; color: #92400e; }
+  .reyting-num.top2 { background: #f3f4f6; color: #374151; }
+  .reyting-num.top3 { background: #fee2e2; color: #92400e; }
+  .reyting-email { flex: 1; font-size: 14px; color: #1a2e1a; }
+  .reyting-ball { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; color: #2d5a27; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+  <div class="welcome-row">
+    <div>
+      <h1 class="welcome-title">Xush kelibsiz, {{ user.first_name|default:user.email }} 👋</h1>
+      <p class="welcome-sub">Bugun ham tabiatni himoya qilishga hissa qo'shing</p>
+    </div>
+    <a href="{% url 'yuklash_page' %}" class="btn-add">+ Yangi xabar</a>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">📊</div>
+      <span class="stat-value">{{ profil.xabarlar_soni }}</span>
+      <span class="stat-label">Jami xabarlar</span>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🏆</div>
+      <span class="stat-value">{{ profil.jami_ball }}</span>
+      <span class="stat-label">To'plangan ball</span>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">✅</div>
+      <span class="stat-value">{{ oxirgi_xabarlar|length }}</span>
+      <span class="stat-label">Oxirgi xabarlar</span>
+    </div>
+  </div>
+
+  <h2 class="section-title">Oxirgi xabarlarim</h2>
+  {% if oxirgi_xabarlar %}
+    <div class="xabarlar-grid">
+      {% for x in oxirgi_xabarlar %}
+      <div class="xabar-card">
+        <div class="xabar-rasm">
+          {% with x.rasmlar.first as rasm %}
+            {% if rasm %}<img src="{{ rasm.rasm.url }}" alt="">{% else %}🗑️{% endif %}
+          {% endwith %}
+        </div>
+        <div class="xabar-body">
+          <span class="xabar-turi turi-{{ x.turi }}">{{ x.get_turi_display }}</span>
+          <p class="xabar-tavsif">{{ x.tavsif|default:""|truncatechars:80 }}</p>
+          <div class="xabar-meta">
+            <span>{{ x.sana|date:"d.m.Y" }}</span>
+            <span class="xabar-holat holat-{{ x.holati }}">{{ x.get_holati_display }}</span>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">🌱</div>
+      <h3 class="empty-title">Hali xabar yo'q</h3>
+      <p class="empty-sub">Birinchi xabaringizni yuborib, ball to'plashni boshlang!</p>
+      <a href="{% url 'yuklash_page' %}" class="btn-add" style="display:inline-flex">+ Xabar berish</a>
+    </div>
+  {% endif %}
+
+  <!-- REYTING -->
+  <div class="reyting-section">
+    <h2 class="section-title">🏆 Top foydalanuvchilar</h2>
+    <div class="reyting-list">
+      {% for p in top_users %}
+      <div class="reyting-item">
+        <div class="reyting-num {% if forloop.counter == 1 %}top1{% elif forloop.counter == 2 %}top2{% elif forloop.counter == 3 %}top3{% endif %}">
+          {{ forloop.counter }}
+        </div>
+        <span class="reyting-email">{{ p.foydalanuvchi.email }}</span>
+        <span class="reyting-ball">{{ p.jami_ball }} ball</span>
+      </div>
+      {% empty %}
+        <div style="padding:24px;text-align:center;color:#7a9b75;font-size:14px">Hozircha reyting yo'q</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

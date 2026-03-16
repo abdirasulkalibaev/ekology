@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+{% block title %}Xabar berish — Ekology{% endblock %}
+{% block nav_yuklash %}active{% endblock %}
+{% block extra_css %}
+<style>
+  .yuklash-wrap { max-width: 680px; margin: 0 auto; padding: 48px 24px; }
+  .page-title { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 700; color: #1a2e1a; margin-bottom: 8px; }
+  .page-sub { font-size: 15px; color: #7a9b75; margin-bottom: 36px; line-height: 1.6; }
+  .upload-card { background: white; border-radius: 20px; border: 1px solid #e8f0e5; overflow: hidden; }
+  .upload-zone {
+    border: 2px dashed #c8dfc4; border-radius: 14px;
+    padding: 40px; text-align: center; cursor: pointer;
+    transition: all 0.2s; margin: 24px; position: relative; background: #f9fdf8;
+  }
+  .upload-zone:hover { border-color: #4a8c3f; background: #f0faf0; }
+  .upload-zone.dragover { border-color: #2d5a27; background: #e8f5e3; }
+  .upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .upload-icon { font-size: 44px; margin-bottom: 12px; }
+  .upload-text { font-size: 16px; color: #2d5a27; font-weight: 500; margin-bottom: 6px; }
+  .upload-hint { font-size: 13px; color: #7a9b75; }
+  .preview-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 16px 24px 0; }
+  .preview-item { position: relative; }
+  .preview-item img { width: 100%; height: 80px; object-fit: cover; border-radius: 8px; }
+  .preview-remove {
+    position: absolute; top: -6px; right: -6px;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: #ef4444; color: white; border: none;
+    font-size: 12px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .form-body { padding: 16px 24px 24px; }
+  .gps-row {
+    display: flex; gap: 12px; padding: 14px 16px;
+    background: #f0faf0; border-radius: 10px;
+    border: 1px solid #c8dfc4; margin-bottom: 20px; align-items: center;
+  }
+  .gps-text { flex: 1; font-size: 13px; color: #4a6741; }
+  .gps-status { font-size: 12px; color: #7a9b75; }
+  .btn-gps { padding: 8px 16px; background: #2d5a27; color: white; border: none; border-radius: 8px; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+  .btn-gps:hover { background: #1a2e1a; }
+  .btn-submit {
+    width: 100%; padding: 14px;
+    background: linear-gradient(135deg, #2d5a27, #4a8c3f);
+    color: white; border: none; border-radius: 12px;
+    font-family: 'Playfair Display', serif;
+    font-size: 16px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(44,90,39,0.3); }
+  .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+  .ai-loading { display: none; text-align: center; padding: 16px; font-size: 14px; color: #4a6741; }
+  .ai-loading .spinner { width: 32px; height: 32px; border: 3px solid #e8f0e5; border-top-color: #2d5a27; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 10px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .error-box { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; border-radius: 10px; padding: 14px 18px; font-size: 14px; margin-bottom: 16px; }
+  .rasm-soni { font-size: 13px; color: #7a9b75; text-align: center; margin: 8px 24px 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="yuklash-wrap">
+  <h1 class="page-title">Chiqindi haqida xabar bering</h1>
+  <p class="page-sub">5 tagacha rasm yuklang, GPS joylashuvingizni tasdiqlang — AI qolganini qiladi.</p>
+
+  {% if xato %}
+  <div class="error-box">⚠️ {{ xato }}</div>
+  {% endif %}
+
+  <div class="upload-card">
+    <form method="POST" enctype="multipart/form-data" id="uploadForm">
+      {% csrf_token %}
+      <input type="hidden" name="latitude" id="latitude" value="41.2995">
+      <input type="hidden" name="longitude" id="longitude" value="69.2401">
+
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" name="rasmlar" id="rasmInput" accept="image/*" multiple>
+        <div id="uploadPlaceholder">
+          <div class="upload-icon">📷</div>
+          <p class="upload-text">Rasmlarni shu yerga tashlang yoki bosing</p>
+          <p class="upload-hint">5 tagacha rasm — JPG, PNG, WEBP</p>
+        </div>
+      </div>
+
+      <div class="preview-grid" id="previewGrid"></div>
+      <p class="rasm-soni" id="rasmSoni"></p>
+
+      <div class="form-body">
+        <div class="gps-row">
+          <span style="font-size:20px">📍</span>
+          <div>
+            <p class="gps-text">Joylashuv</p>
+            <p class="gps-status" id="gpsStatus">Aniqlanmagan</p>
+          </div>
+          <button type="button" class="btn-gps" onclick="gpsOl()">Joylashuvni aniqlash</button>
+        </div>
+        <div class="ai-loading" id="aiLoading">
+          <div class="spinner"></div>
+          <p>AI rasmlarni tahlil qilmoqda...</p>
+        </div>
+        <button type="submit" class="btn-submit" id="submitBtn">Xabar yuborish →</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  let tanlanganFayllar = [];
+
+  document.getElementById('rasmInput').addEventListener('change', function(e) {
+    const yangi = Array.from(e.target.files);
+    yangi.forEach(fayl => {
+      if (tanlanganFayllar.length < 5) tanlanganFayllar.push(fayl);
+    });
+    previewKorsat();
+  });
+
+  function previewKorsat() {
+    const grid = document.getElementById('previewGrid');
+    const soni = document.getElementById('rasmSoni');
+    const placeholder = document.getElementById('uploadPlaceholder');
+    grid.innerHTML = '';
+    if (tanlanganFayllar.length > 0) {
+      placeholder.style.display = 'none';
+      tanlanganFayllar.forEach((fayl, i) => {
+        const reader = new FileReader();
+        reader.onload = ev => {
+          const div = document.createElement('div');
+          div.className = 'preview-item';
+          div.innerHTML = `<img src="${ev.target.result}"><button class="preview-remove" onclick="rasmOchir(${i})">✕</button>`;
+          grid.appendChild(div);
+        };
+        reader.readAsDataURL(fayl);
+      });
+      soni.textContent = `${tanlanganFayllar.length}/5 ta rasm tanlandi`;
+    } else {
+      placeholder.style.display = 'block';
+      soni.textContent = '';
+    }
+  }
+
+  function rasmOchir(index) {
+    tanlanganFayllar.splice(index, 1);
+    previewKorsat();
+  }
+
+  function gpsOl() {
+    const status = document.getElementById('gpsStatus');
+    status.textContent = 'Aniqlanmoqda...';
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          document.getElementById('latitude').value = pos.coords.latitude.toFixed(6);
+          document.getElementById('longitude').value = pos.coords.longitude.toFixed(6);
+          status.textContent = `${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)} ✅`;
+        },
+        () => { status.textContent = 'Ruxsat berilmadi — standart joylashuv ishlatiladi'; }
+      );
+    }
+  }
+
+  document.getElementById('uploadForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    if (tanlanganFayllar.length === 0) {
+      alert('Kamida 1 ta rasm yuklang!');
+      return;
+    }
+    const formData = new FormData();
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+    formData.append('latitude', document.getElementById('latitude').value);
+    formData.append('longitude', document.getElementById('longitude').value);
+    tanlanganFayllar.forEach(fayl => formData.append('rasmlar', fayl));
+
+    document.getElementById('submitBtn').disabled = true;
+    document.getElementById('submitBtn').textContent = 'Yuklanmoqda...';
+    document.getElementById('aiLoading').style.display = 'block';
+    this.submit();
+
+    // FormData ni forma ga qo'shib yuborish
+    const input = document.getElementById('rasmInput');
+    const dt = new DataTransfer();
+    tanlanganFayllar.forEach(f => dt.items.add(f));
+    input.files = dt.files;
+    HTMLFormElement.prototype.submit.call(this);
+  });
+
+  const zone = document.getElementById('uploadZone');
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('dragover');
+    Array.from(e.dataTransfer.files).forEach(f => {
+      if (tanlanganFayllar.length < 5) tanlanganFayllar.push(f);
+    });
+    previewKorsat();
+  });
+</script>
+{% endblock %}

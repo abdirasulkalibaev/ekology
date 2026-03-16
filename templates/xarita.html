@@ -1,0 +1,272 @@
+{% extends 'base.html' %}
+{% block title %}Xarita — Ekology{% endblock %}
+{% block nav_xarita %}active{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+  .xarita-wrap { display: flex; height: calc(100vh - 70px); }
+  #map { flex: 1; z-index: 1; }
+ 
+  /* SIDEBAR */
+  .sidebar {
+    width: 320px; background: white;
+    border-left: 1px solid #e8f0e5;
+    display: flex; flex-direction: column;
+    overflow: hidden; z-index: 2;
+  }
+  .sidebar-header {
+    padding: 20px 20px 14px;
+    border-bottom: 1px solid #e8f0e5;
+  }
+  .sidebar-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px; font-weight: 700; color: #1a2e1a; margin-bottom: 4px;
+  }
+  .sidebar-sub { font-size: 12px; color: #7a9b75; }
+ 
+  /* FILTER */
+  .filter-row {
+    display: flex; gap: 6px; flex-wrap: wrap;
+    padding: 12px 16px; border-bottom: 1px solid #e8f0e5;
+  }
+  .filter-btn {
+    padding: 5px 12px; border-radius: 20px;
+    font-size: 11px; font-weight: 500; cursor: pointer;
+    border: 1.5px solid #e8f0e5; background: white;
+    color: #7a9b75; transition: all 0.2s;
+  }
+  .filter-btn.active, .filter-btn:hover {
+    background: #e8f5e3; border-color: #4a8c3f; color: #2d5a27;
+  }
+ 
+  /* LEGEND */
+  .legend {
+    display: flex; gap: 16px; padding: 10px 16px;
+    border-bottom: 1px solid #e8f0e5;
+    font-size: 12px; color: #4a6741;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-dot {
+    width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0;
+  }
+  .dot-red   { background: #ef4444; border: 2px solid #fff; box-shadow: 0 0 0 1.5px #ef4444; }
+  .dot-green { background: #22c55e; border: 2px solid #fff; box-shadow: 0 0 0 1.5px #22c55e; }
+ 
+  /* LIST */
+  .xabarlar-list { flex: 1; overflow-y: auto; padding: 10px; }
+  .xabar-item {
+    display: flex; gap: 10px; padding: 10px;
+    border-radius: 10px; cursor: pointer;
+    border: 1px solid transparent; margin-bottom: 6px;
+    transition: all 0.2s; align-items: flex-start;
+  }
+  .xabar-item:hover { background: #f0faf0; border-color: #c8dfc4; }
+  .xabar-item.selected { background: #e8f5e3; border-color: #4a8c3f; }
+  .xabar-img {
+    width: 56px; height: 56px; border-radius: 8px;
+    object-fit: cover; flex-shrink: 0;
+    background: #e8f5e3;
+    display: flex; align-items: center; justify-content: center; font-size: 22px;
+  }
+  .xabar-img img { width: 56px; height: 56px; border-radius: 8px; object-fit: cover; }
+  .xabar-info { flex: 1; min-width: 0; }
+  .xabar-turi-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 10px;
+    font-size: 10px; font-weight: 500; margin-bottom: 3px;
+  }
+  .badge-plastik  { background: #fef3c7; color: #92400e; }
+  .badge-qurilish { background: #fee2e2; color: #991b1b; }
+  .badge-maishiy  { background: #e8f5e3; color: #166534; }
+  .badge-kimyoviy { background: #ede9fe; color: #5b21b6; }
+  .badge-noaniq   { background: #f3f4f6; color: #374151; }
+  .xabar-meta { font-size: 11px; color: #7a9b75; margin-top: 2px; }
+  .holat-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    flex-shrink: 0; margin-top: 5px;
+  }
+  .dot-tasdiqlandi { background: #ef4444; }
+  .dot-tozalandi   { background: #22c55e; }
+ 
+  /* EMPTY */
+  .empty-list {
+    text-align: center; padding: 40px 20px;
+    font-size: 13px; color: #7a9b75;
+  }
+ 
+  /* POPUP */
+  .leaflet-popup-content-wrapper {
+    border-radius: 12px !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15) !important;
+    font-family: 'DM Sans', sans-serif !important;
+  }
+  .popup-inner { padding: 4px; min-width: 180px; }
+  .popup-turi {
+    font-weight: 600; font-size: 14px; color: #1a2e1a; margin-bottom: 4px;
+  }
+  .popup-meta { font-size: 12px; color: #7a9b75; margin-bottom: 6px; }
+  .popup-holat {
+    display: inline-block; padding: 3px 10px; border-radius: 10px;
+    font-size: 11px; font-weight: 500;
+  }
+  .popup-tasdiqlandi { background: #fee2e2; color: #991b1b; }
+  .popup-tozalandi   { background: #dcfce7; color: #166534; }
+</style>
+{% endblock %}
+ 
+{% block content %}
+<div class="xarita-wrap">
+  <div id="map"></div>
+ 
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h2 class="sidebar-title">Chiqindi xaritasi</h2>
+      <p class="sidebar-sub">Tasdiqlangan va tozalangan joylar</p>
+    </div>
+ 
+    <div class="filter-row">
+      <button class="filter-btn active" onclick="filter('hammasi', this)">Hammasi</button>
+      <button class="filter-btn" onclick="filter('tasdiqlandi', this)">🔴 Tasdiqlangan</button>
+      <button class="filter-btn" onclick="filter('tozalandi', this)">🟢 Tozalangan</button>
+    </div>
+ 
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-dot dot-red"></div>
+        <span>Tozalanishi kerak</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot dot-green"></div>
+        <span>Tozalangan</span>
+      </div>
+    </div>
+ 
+    <div class="xabarlar-list" id="xabarlarList"></div>
+  </div>
+</div>
+ 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const XABARLAR = {{ xabarlar_json|safe }};
+let markers = [];
+let activeMarker = null;
+ 
+// XARITA
+const map = L.map('map', {
+  center: [41.2995, 69.2401],
+  zoom: 12,
+  zoomControl: true,
+});
+ 
+// OpenStreetMap tiles
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap',
+  maxZoom: 19,
+}).addTo(map);
+ 
+// MARKER ICON YARATISH
+function markerIcon(holati) {
+  const color = holati === 'tozalandi' ? '#22c55e' : '#ef4444';
+  const svg = `
+    <svg width="28" height="36" viewBox="0 0 28 36" xmlns="http://www.w3.org/2000/svg">
+      <path d="M14 0C6.27 0 0 6.27 0 14c0 9.33 14 22 14 22S28 23.33 28 14C28 6.27 21.73 0 14 0z"
+        fill="${color}" stroke="white" stroke-width="2"/>
+      <circle cx="14" cy="14" r="6" fill="white"/>
+    </svg>`;
+  return L.divIcon({
+    html: svg,
+    iconSize: [28, 36],
+    iconAnchor: [14, 36],
+    popupAnchor: [0, -38],
+    className: '',
+  });
+}
+ 
+// MARKERLARNI QO'SHISH
+XABARLAR.forEach((x, i) => {
+  const marker = L.marker([x.lat, x.lng], { icon: markerIcon(x.holati) });
+ 
+  const popupHtml = `
+    <div class="popup-inner">
+      ${x.rasm ? `<img src="${x.rasm}" style="width:100%;height:100px;object-fit:cover;border-radius:8px;margin-bottom:8px">` : ''}
+      <p class="popup-turi">${x.turi.charAt(0).toUpperCase() + x.turi.slice(1)}</p>
+      <p class="popup-meta">📅 ${x.sana}</p>
+      <span class="popup-holat popup-${x.holati}">
+        ${x.holati === 'tozalandi' ? '✅ Tozalangan' : '⏳ Tozalanishi kerak'}
+      </span>
+    </div>`;
+ 
+  marker.bindPopup(popupHtml, { maxWidth: 220 });
+ 
+  marker.on('click', () => {
+    highlightItem(i);
+    scrollToItem(i);
+  });
+ 
+  marker.addTo(map);
+  markers.push({ marker, data: x, index: i });
+});
+ 
+// RO'YXAT RENDER
+function renderList(data) {
+  const list = document.getElementById('xabarlarList');
+  if (!data.length) {
+    list.innerHTML = `<div class="empty-list">🌿 Hozircha xabar yo'q</div>`;
+    return;
+  }
+  list.innerHTML = data.map((x, i) => `
+    <div class="xabar-item" id="item-${i}" onclick="goTo(${x.lat}, ${x.lng}, ${i})">
+      <div class="xabar-img">
+        ${x.rasm ? `<img src="${x.rasm}" alt="">` : '🗑️'}
+      </div>
+      <div class="xabar-info">
+        <span class="xabar-turi-badge badge-${x.turi}">${x.turi}</span>
+        <p class="xabar-meta">📅 ${x.sana}</p>
+        <p class="xabar-meta">⚠️ ${x.xavflilik} xavf · ${x.hajm}</p>
+      </div>
+      <div class="holat-dot dot-${x.holati}"></div>
+    </div>
+  `).join('');
+}
+ 
+// XARITAGA O'TISH
+function goTo(lat, lng, index) {
+  map.setView([lat, lng], 16, { animate: true });
+  markers[index]?.marker.openPopup();
+  highlightItem(index);
+}
+ 
+// ITEM HIGHLIGHT
+function highlightItem(index) {
+  document.querySelectorAll('.xabar-item').forEach(el => el.classList.remove('selected'));
+  document.getElementById(`item-${index}`)?.classList.add('selected');
+}
+ 
+// SCROLL
+function scrollToItem(index) {
+  document.getElementById(`item-${index}`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+ 
+// FILTER
+function filter(holat, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+ 
+  const filtered = holat === 'hammasi'
+    ? XABARLAR
+    : XABARLAR.filter(x => x.holati === holat);
+ 
+  markers.forEach(({ marker, data }) => {
+    if (holat === 'hammasi' || data.holati === holat) {
+      marker.addTo(map);
+    } else {
+      marker.remove();
+    }
+  });
+ 
+  renderList(filtered);
+}
+ 
+// Boshlang'ich render
+renderList(XABARLAR);
+</script>
+{% endblock %}

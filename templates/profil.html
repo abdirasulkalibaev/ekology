@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% block title %}Profil — Ekology{% endblock %}
+{% block nav_profil %}active{% endblock %}
+{% block extra_css %}
+<style>
+  .profil-wrap { max-width: 900px; margin: 0 auto; padding: 48px 24px; }
+  .profil-card {
+    background: white; border-radius: 20px;
+    border: 1px solid #e8f0e5; padding: 36px;
+    display: flex; align-items: center; gap: 28px;
+    margin-bottom: 24px; position: relative; overflow: hidden;
+  }
+  .profil-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 6px;
+    background: linear-gradient(90deg, #2d5a27, #8bc34a);
+  }
+  .avatar {
+    width: 80px; height: 80px; border-radius: 50%;
+    background: linear-gradient(135deg, #2d5a27, #8bc34a);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 28px; font-weight: 700; color: white; flex-shrink: 0;
+  }
+  .profil-info { flex: 1; }
+  .profil-name { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 700; color: #1a2e1a; margin-bottom: 4px; }
+  .profil-email { font-size: 14px; color: #7a9b75; margin-bottom: 12px; }
+  .profil-badges { display: flex; gap: 8px; flex-wrap: wrap; }
+  .badge { padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+  .badge-green { background: #e8f5e3; color: #2d5a27; }
+  .badge-gold { background: #fef3c7; color: #92400e; }
+  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 32px; }
+  .stat-box { background: white; border-radius: 14px; border: 1px solid #e8f0e5; padding: 24px; text-align: center; }
+  .stat-big { font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 700; color: #2d5a27; display: block; margin-bottom: 4px; }
+  .stat-small { font-size: 13px; color: #7a9b75; }
+  .section-title { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: #1a2e1a; margin-bottom: 16px; }
+  .xabar-row {
+    display: flex; align-items: center; gap: 16px;
+    background: white; border-radius: 12px;
+    border: 1px solid #e8f0e5; padding: 16px;
+    margin-bottom: 10px; transition: all 0.2s;
+  }
+  .xabar-row:hover { box-shadow: 0 4px 14px rgba(44,90,39,0.08); }
+  .xabar-row img { width: 56px; height: 56px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
+  .xabar-row-info { flex: 1; }
+  .xabar-row-turi { font-size: 14px; font-weight: 500; color: #1a2e1a; margin-bottom: 3px; }
+  .xabar-row-meta { font-size: 12px; color: #7a9b75; }
+  .xabar-row-ball { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; color: #2d5a27; }
+  .holat-chip { padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+  .holat-kutilmoqda { background: #fef3c7; color: #92400e; }
+  .holat-qabul { background: #dbeafe; color: #1e40af; }
+  .holat-tasdiqlandi { background: #dcfce7; color: #166534; }
+  .holat-tozalandi { background: #dcfce7; color: #166534; }
+  .holat-rad { background: #fee2e2; color: #991b1b; }
+  .reyting-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #e8f5e3; color: #2d5a27;
+    padding: 8px 16px; border-radius: 20px;
+    font-size: 13px; font-weight: 500;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profil-wrap">
+  <div class="profil-card">
+    <div class="avatar">{{ user.first_name|first|upper|default:user.email|first|upper }}</div>
+    <div class="profil-info">
+      <h1 class="profil-name">{{ user.get_full_name|default:user.email }}</h1>
+      <p class="profil-email">{{ user.email }}</p>
+      <div class="profil-badges">
+        <span class="badge badge-green">🌿 Ekolog</span>
+        {% if profil.jami_ball >= 100 %}<span class="badge badge-gold">🏆 Top foydalanuvchi</span>{% endif %}
+        {% if profil.xabarlar_soni >= 5 %}<span class="badge badge-green">⭐ Faol a'zo</span>{% endif %}
+        {% if reyting_orni %}<span class="badge badge-gold">📊 Reyting: #{{ reyting_orni }}</span>{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-box"><span class="stat-big">{{ profil.jami_ball }}</span><span class="stat-small">🏆 Jami ball</span></div>
+    <div class="stat-box"><span class="stat-big">{{ profil.xabarlar_soni }}</span><span class="stat-small">📊 Jami xabarlar</span></div>
+    <div class="stat-box"><span class="stat-big">{{ xabarlar|length }}</span><span class="stat-small">📝 Barcha xabarlar</span></div>
+  </div>
+
+  <h2 class="section-title">Mening xabarlarim</h2>
+  {% for x in xabarlar %}
+  <div class="xabar-row">
+    {% with x.rasmlar.first as rasm %}
+      {% if rasm %}
+        <img src="{{ rasm.rasm.url }}" alt="">
+      {% else %}
+        <div style="width:56px;height:56px;border-radius:8px;background:#e8f5e3;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">🗑️</div>
+      {% endif %}
+    {% endwith %}
+    <div class="xabar-row-info">
+      <p class="xabar-row-turi">{{ x.get_turi_display }}</p>
+      <p class="xabar-row-meta">{{ x.sana|date:"d.m.Y H:i" }} · {{ x.get_xavflilik_display }} xavf · {{ x.rasmlar.count }} ta rasm</p>
+    </div>
+    <span class="holat-chip holat-{{ x.holati }}">{{ x.get_holati_display }}</span>
+    <span class="xabar-row-ball">+{{ x.ball }}</span>
+  </div>
+  {% empty %}
+  <div style="text-align:center;padding:48px;background:white;border-radius:16px;border:1px solid #e8f0e5">
+    <p style="font-size:36px;margin-bottom:12px">🌱</p>
+    <p style="font-size:16px;color:#1a2e1a;font-weight:500;margin-bottom:8px">Hali xabar yo'q</p>
+    <p style="font-size:14px;color:#7a9b75;margin-bottom:20px">Birinchi xabaringizni yuborib, ball to'plashni boshlang!</p>
+    <a href="{% url 'yuklash_page' %}" style="padding:12px 24px;background:#2d5a27;color:white;border-radius:10px;text-decoration:none;font-size:14px;font-weight:500">Xabar berish →</a>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
+```
+
+---
+
+Hammasi shu! Har bir faylni to'g'ri papkaga qo'ying:
+```
+templates/base.html
+templates/landing.html
+templates/home.html
+templates/yuklash.html
+templates/profil.html

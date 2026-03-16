@@ -1,0 +1,177 @@
+
+{% extends 'base.html' %}
+{% block title %}Admin Panel — Ekology{% endblock %}
+{% block extra_css %}
+<style>
+  .admin-wrap { padding: 40px 60px; }
+  .page-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px; font-weight: 700; color: #1a2e1a; margin-bottom: 8px;
+  }
+  .stats-row {
+    display: grid; grid-template-columns: repeat(4,1fr);
+    gap: 16px; margin-bottom: 36px;
+  }
+  .stat-box {
+    background: white; border-radius: 14px;
+    border: 1px solid #e8f0e5; padding: 20px; text-align: center;
+  }
+  .stat-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px; font-weight: 700; color: #2d5a27; display: block;
+  }
+  .stat-lbl { font-size: 12px; color: #7a9b75; }
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px; font-weight: 700; color: #1a2e1a;
+    margin: 32px 0 16px;
+  }
+  .xabar-card {
+    background: white; border-radius: 14px;
+    border: 1px solid #e8f0e5; padding: 20px;
+    display: flex; gap: 16px; margin-bottom: 12px;
+    align-items: flex-start;
+  }
+  .rasmlar-row { display: flex; gap: 8px; flex-shrink: 0; }
+  .rasmlar-row img {
+    width: 80px; height: 80px; border-radius: 8px;
+    object-fit: cover;
+  }
+  .xabar-info { flex: 1; }
+  .xabar-meta { font-size: 13px; color: #7a9b75; margin-bottom: 8px; }
+  .xabar-tagsrow { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .tag {
+    padding: 4px 12px; border-radius: 20px;
+    font-size: 11px; font-weight: 500;
+  }
+  .tag-turi { background: #e8f5e3; color: #2d5a27; }
+  .tag-hajm { background: #dbeafe; color: #1e40af; }
+  .tag-xavf-past { background: #dcfce7; color: #166534; }
+  .tag-xavf-orta { background: #fef3c7; color: #92400e; }
+  .tag-xavf-yuqori { background: #fee2e2; color: #991b1b; }
+  .tag-ball { background: #f3e8ff; color: #6b21a8; }
+  .xabar-tavsif { font-size: 13px; color: #4a6741; margin-bottom: 12px; line-height: 1.5; }
+  .btn-row { display: flex; gap: 8px; }
+  .btn-confirm {
+    padding: 8px 18px; background: #2d5a27; color: white;
+    border: none; border-radius: 8px; font-size: 13px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-confirm:hover { background: #1a2e1a; }
+  .btn-clean {
+    padding: 8px 18px; background: #16a34a; color: white;
+    border: none; border-radius: 8px; font-size: 13px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-clean:hover { background: #15803d; }
+  .btn-reject {
+    padding: 8px 18px; background: #dc2626; color: white;
+    border: none; border-radius: 8px; font-size: 13px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-reject:hover { background: #b91c1c; }
+  .empty { padding: 24px; text-align: center; color: #7a9b75; font-size: 14px;
+    background: white; border-radius: 12px; border: 1px solid #e8f0e5; }
+  .koordinata { font-size: 11px; color: #9ca3af; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-wrap">
+  <h1 class="page-title">Admin Panel</h1>
+
+  <!-- STATISTIKA -->
+  <div class="stats-row">
+    <div class="stat-box">
+      <span class="stat-num">{{ kutilmoqda|length }}</span>
+      <span class="stat-lbl">Kutilmoqda</span>
+    </div>
+    <div class="stat-box">
+      <span class="stat-num">{{ tasdiqlangan|length }}</span>
+      <span class="stat-lbl">Tasdiqlangan</span>
+    </div>
+    <div class="stat-box">
+      <span class="stat-num">{{ tozalangan|length }}</span>
+      <span class="stat-lbl">Tozalangan</span>
+    </div>
+    <div class="stat-box">
+      <span class="stat-num">{{ jami_xabarlar }}</span>
+      <span class="stat-lbl">Jami xabarlar</span>
+    </div>
+  </div>
+
+  <!-- KUTILMOQDA -->
+  <h2 class="section-title">⏳ Tasdiqlash kutilmoqda ({{ kutilmoqda|length }})</h2>
+  {% for x in kutilmoqda %}
+  <div class="xabar-card">
+    <div class="rasmlar-row">
+      {% for r in x.rasmlar.all|slice:":3" %}
+        <img src="{{ r.rasm.url }}" alt="">
+      {% empty %}
+        <div style="width:80px;height:80px;border-radius:8px;background:#e8f5e3;display:flex;align-items:center;justify-content:center;font-size:28px">🗑️</div>
+      {% endfor %}
+    </div>
+    <div class="xabar-info">
+      <p class="xabar-meta">
+        👤 {{ x.foydalanuvchi.email }} &nbsp;·&nbsp;
+        📅 {{ x.sana|date:"d.m.Y H:i" }} &nbsp;·&nbsp;
+        🖼️ {{ x.rasmlar.count }} ta rasm
+      </p>
+      <div class="xabar-tagsrow">
+        <span class="tag tag-turi">{{ x.get_turi_display }}</span>
+        <span class="tag tag-hajm">{{ x.get_hajm_display }}</span>
+        <span class="tag tag-xavf-{{ x.xavflilik }}">{{ x.get_xavflilik_display }} xavf</span>
+        <span class="tag tag-ball">+{{ x.ball }} ball</span>
+      </div>
+      {% if x.tavsif %}
+        <p class="xabar-tavsif">{{ x.tavsif }}</p>
+      {% endif %}
+      <p class="koordinata">📍 {{ x.latitude }}, {{ x.longitude }}</p>
+      <div class="btn-row" style="margin-top:12px">
+        <form method="post" action="{% url 'xabar_tasdiqlash' x.id %}">
+          {% csrf_token %}
+          <button type="submit" class="btn-confirm">✅ Tasdiqlash</button>
+        </form>
+        <form method="post" action="{% url 'xabar_rad_etish' x.id %}">
+          {% csrf_token %}
+          <button type="submit" class="btn-reject">❌ Rad etish</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+    <div class="empty">Hozircha kutilayotgan xabar yo'q ✅</div>
+  {% endfor %}
+
+  <!-- TASDIQLANGAN -->
+  <h2 class="section-title">✅ Tasdiqlangan — tozalanishi kutilmoqda</h2>
+  {% for x in tasdiqlangan %}
+  <div class="xabar-card">
+    <div class="rasmlar-row">
+      {% for r in x.rasmlar.all|slice:":2" %}
+        <img src="{{ r.rasm.url }}" alt="">
+      {% endfor %}
+    </div>
+    <div class="xabar-info">
+      <p class="xabar-meta">
+        👤 {{ x.foydalanuvchi.email }} &nbsp;·&nbsp; 📅 {{ x.sana|date:"d.m.Y" }}
+      </p>
+      <div class="xabar-tagsrow">
+        <span class="tag tag-turi">{{ x.get_turi_display }}</span>
+        <span class="tag tag-xavf-{{ x.xavflilik }}">{{ x.get_xavflilik_display }} xavf</span>
+      </div>
+      <p class="koordinata">📍 {{ x.latitude }}, {{ x.longitude }}</p>
+      <div class="btn-row" style="margin-top:12px">
+        <form method="post" action="{% url 'xabar_tozalandi' x.id %}">
+          {% csrf_token %}
+          <button type="submit" class="btn-clean">🧹 Tozalandi</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+    <div class="empty">Hozircha tasdiqlangan xabar yo'q</div>
+  {% endfor %}
+
+</div>
+{% endblock %}

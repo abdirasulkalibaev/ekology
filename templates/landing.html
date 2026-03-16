@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+{% block title %}Ekology — O'zbekiston ekologiyasini himoya qilaylik{% endblock %}
+{% block extra_css %}
+<style>
+  .hero {
+    min-height: 100vh; position: relative;
+    display: flex; align-items: center; overflow: hidden;
+  }
+  .hero-bg {
+    position: absolute; inset: 0;
+    background-image: url('https://images.unsplash.com/photo-1448375240586-882707db888b?w=1600&q=80');
+    background-size: cover; background-position: center;
+    transform: scale(1.05);
+    animation: zoomOut 8s ease forwards;
+  }
+  @keyframes zoomOut { to { transform: scale(1); } }
+  .hero-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to right, rgba(26,46,26,0.75) 0%, rgba(26,46,26,0.4) 60%, transparent 100%);
+  }
+  .hero-content {
+    position: relative; z-index: 1;
+    padding: 0 80px; max-width: 720px;
+    animation: fadeUp 0.9s ease 0.2s both;
+  }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(30px); } to { opacity:1; transform:translateY(0); } }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    backdrop-filter: blur(8px);
+    color: white; font-size: 13px; font-weight: 500;
+    padding: 6px 16px; border-radius: 20px; margin-bottom: 24px;
+  }
+  .hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 58px; font-weight: 700;
+    color: white; line-height: 1.15;
+    margin-bottom: 20px; letter-spacing: -1px;
+  }
+  .hero-title em { font-style: italic; color: #a8e063; }
+  .hero-sub {
+    font-size: 18px; color: rgba(255,255,255,0.85);
+    line-height: 1.7; margin-bottom: 36px; font-weight: 300;
+  }
+  .hero-btns { display: flex; gap: 14px; flex-wrap: wrap; }
+  .btn-primary {
+    padding: 14px 28px; background: #4a8c3f; color: white;
+    border: none; border-radius: 10px; font-size: 15px; font-weight: 500;
+    text-decoration: none; transition: all 0.2s;
+  }
+  .btn-primary:hover { background: #2d5a27; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(74,140,63,0.4); }
+  .btn-secondary {
+    padding: 14px 28px;
+    background: rgba(255,255,255,0.15);
+    border: 1.5px solid rgba(255,255,255,0.4);
+    backdrop-filter: blur(8px); color: white;
+    border-radius: 10px; font-size: 15px; font-weight: 500;
+    text-decoration: none; transition: all 0.2s;
+  }
+  .btn-secondary:hover { background: rgba(255,255,255,0.25); }
+  .stats-bar {
+    background: white; padding: 40px 80px;
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 20px; border-bottom: 1px solid #e8f0e5;
+  }
+  .stat-card { text-align: center; }
+  .stat-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 36px; font-weight: 700; color: #2d5a27;
+    display: block; margin-bottom: 4px;
+  }
+  .stat-label { font-size: 13px; color: #7a9b75; }
+  .section { padding: 80px; background: #f5f5f0; }
+  .section-tag { font-size: 12px; font-weight: 500; letter-spacing: 1.5px; color: #4a8c3f; text-transform: uppercase; margin-bottom: 12px; }
+  .section-title { font-family: 'Playfair Display', serif; font-size: 38px; font-weight: 700; color: #1a2e1a; margin-bottom: 16px; }
+  .section-sub { font-size: 16px; color: #7a9b75; line-height: 1.7; max-width: 500px; }
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 48px; }
+  .step-card {
+    background: white; border-radius: 16px; padding: 32px;
+    border: 1px solid #e8f0e5; transition: all 0.3s;
+  }
+  .step-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(44,90,39,0.1); }
+  .step-num {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: #e8f5e3; color: #2d5a27;
+    font-family: 'Playfair Display', serif;
+    font-size: 20px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; margin-bottom: 20px;
+  }
+  .step-title { font-size: 17px; font-weight: 500; color: #1a2e1a; margin-bottom: 10px; }
+  .step-desc { font-size: 14px; color: #7a9b75; line-height: 1.6; }
+  .cta-section {
+    margin: 0 80px 80px;
+    background: linear-gradient(135deg, #1a2e1a 0%, #2d5a27 100%);
+    border-radius: 24px; padding: 64px;
+    display: flex; align-items: center; justify-content: space-between;
+    overflow: hidden; position: relative;
+  }
+  .cta-section::before {
+    content: '🌿'; position: absolute; right: 60px; top: 50%;
+    transform: translateY(-50%); font-size: 180px; opacity: 0.08;
+  }
+  .cta-title { font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 700; color: white; margin-bottom: 12px; }
+  .cta-sub { font-size: 15px; color: rgba(255,255,255,0.7); max-width: 400px; line-height: 1.6; }
+  .btn-white {
+    padding: 14px 32px; background: white; color: #2d5a27;
+    border: none; border-radius: 10px; font-size: 15px; font-weight: 600;
+    text-decoration: none; white-space: nowrap; transition: all 0.2s; flex-shrink: 0;
+  }
+  .btn-white:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
+</style>
+{% endblock %}
+
+{% block navbar %}
+<nav class="navbar">
+  <a href="{% url 'landing_page' %}" class="nav-logo" style="text-decoration:none">
+    <div class="nav-logo-dot">🌿</div>
+    <span class="nav-logo-text">Ekology</span>
+  </a>
+  <div class="nav-links">
+    {% if user.is_authenticated %}
+      <a href="{% url 'home_page' %}" class="nav-link">Dashboard</a>
+      <a href="{% url 'xarita_page' %}" class="nav-link">Xarita</a>
+      <a href="{% url 'yuklash_page' %}" class="nav-link">Xabar berish</a>
+    {% else %}
+      <a href="{% url 'xarita_page' %}" class="nav-link">Xarita</a>
+      <a href="{% url 'account_login' %}" class="nav-btn">Kirish</a>
+    {% endif %}
+  </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <div class="hero-badge">🌱 O'zbekiston uchun, O'zbekiston tomonidan</div>
+    <h1 class="hero-title">Tabiatni <em>birga</em><br>himoya qilaylik</h1>
+    <p class="hero-sub">Atrofingizdagi chiqindi joylarini suratga oling, xaritaga qo'shing. Sun'iy intellekt tahlil qiladi, jamoamiz tozalaydi.</p>
+    <div class="hero-btns">
+      {% if user.is_authenticated %}
+        <a href="{% url 'yuklash_page' %}" class="btn-primary">Xabar berish →</a>
+        <a href="{% url 'xarita_page' %}" class="btn-secondary">Xaritani ko'rish</a>
+      {% else %}
+        <a href="{% url 'account_login' %}" class="btn-primary">Boshlash →</a>
+        <a href="{% url 'xarita_page' %}" class="btn-secondary">Xaritani ko'rish</a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<div class="stats-bar">
+  <div class="stat-card"><span class="stat-num">{{ jami_xabarlar }}+</span><span class="stat-label">Xabar berilgan joy</span></div>
+  <div class="stat-card"><span class="stat-num">{{ tozalangan }}+</span><span class="stat-label">Tozalangan hudud</span></div>
+  <div class="stat-card"><span class="stat-num">14</span><span class="stat-label">Viloyat qamrab olingan</span></div>
+  <div class="stat-card"><span class="stat-num">500+</span><span class="stat-label">Faol foydalanuvchi</span></div>
+</div>
+
+<section class="section">
+  <div class="section-tag">Jarayon</div>
+  <h2 class="section-title">Qanday ishlaydi?</h2>
+  <p class="section-sub">Uch oddiy qadam — tabiatni himoya qilishni boshlash uchun yetarli.</p>
+  <div class="steps">
+    <div class="step-card">
+      <div class="step-num">1</div>
+      <h3 class="step-title">Suratga oling</h3>
+      <p class="step-desc">Atrofingizda chiqindi ko'rsangiz, telefonda suratga oling va saytga yuklang.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-num">2</div>
+      <h3 class="step-title">AI tahlil qiladi</h3>
+      <p class="step-desc">Sun'iy intellekt rasmni tahlil qilib, chiqindi turini va xavflilik darajasini aniqlaydi.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-num">3</div>
+      <h3 class="step-title">Ball to'plang</h3>
+      <p class="step-desc">Har bir xabar uchun ball oling. Top foydalanuvchilar reytingda ko'rinadi.</p>
+    </div>
+  </div>
+</section>
+
+<div class="cta-section">
+  <div>
+    <h2 class="cta-title">Bugun boshlaymizmi?</h2>
+    <p class="cta-sub">Google hisobingiz bilan bir daqiqada ro'yxatdan o'ting va birinchi xabaringizni yuboring.</p>
+  </div>
+  <a href="{% url 'account_login' %}" class="btn-white">Boshlash →</a>
+</div>
+{% endblock %}
